@@ -1,0 +1,10 @@
+#! /bin/sh
+
+GPG_PRIVATE_KEY_FILE='/app/config/gpg/privkey.asc'
+
+if [ -f "${GPG_PRIVATE_KEY_FILE}" ]
+then
+	gpg --import "${GPG_PRIVATE_KEY_FILE}"
+fi
+
+exec "$(dirname "$0")/_$(basename "$0")" "$@"
