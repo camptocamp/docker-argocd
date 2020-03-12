@@ -22,7 +22,7 @@ Read [Helm Sops documentation](https://github.com/camptocamp/helm-sops) to start
 
 #### Using the custom image
 
-To use this custom image when deploying Argo CD using the [Helm chart](https://github.com/camptocamp/argo-helm/tree/master/charts/argo-cd), add the following lines to the chart value file:
+To use this custom image when deploying Argo CD using the [Helm chart](https://github.com/argoproj/argo-helm/tree/master/charts/argo-cd), add the following lines to the chart value file:
 
 ```yaml
 global:
