@@ -40,7 +40,7 @@ global:
   securityContext:
     fsGroup: 2000
 
-repoServer
+repoServer:
   volumes:
     - name: "gpg-private-key"
       secret:
