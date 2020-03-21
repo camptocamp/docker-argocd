@@ -95,3 +95,7 @@ configs:
       aws.accessKeyId: <Access Key ID>
       aws.secretAccessKey: <Secret Access Key>
 ```
+
+## Example application
+
+An example application as well as an example Argo CD setup to deploy it can be found [here](https://github.com/camptocamp/argocd-helm-sops-example).
