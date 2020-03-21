@@ -4,7 +4,6 @@ This Argo CD Docker Image contains the necessary tools to make use of Helm value
 
 The following tools have been added to the image:
 
-- AWS CLI
 - GnuPG
 - [Helm Sops](https://github.com/camptocamp/helm-sops)
 
