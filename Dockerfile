@@ -3,7 +3,7 @@ RUN git clone --branch=20200325-1 --depth=1 https://github.com/camptocamp/helm-s
     cd helm-sops && \
     go build
 
-FROM argoproj/argocd:v1.5.0
+FROM argoproj/argocd:v1.4.2
 USER root
 RUN apt-get update && \
     apt-get install -y \
