@@ -3,15 +3,15 @@ RUN git clone --branch=20200403-1 --depth=1 https://github.com/camptocamp/helm-s
     cd helm-sops && \
     go build
 
-FROM argoproj/argocd:v1.4.2
+FROM argoproj/argocd:v1.5.0
 USER root
-RUN apt-get update && \
-    apt-get install -y \
-      gpg && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-RUN mv /usr/local/bin/argocd-repo-server /usr/local/bin/_argocd-repo-server && \
-    mv /usr/local/bin/helm /usr/local/bin/_helm
-COPY argocd-repo-server-wrapper /usr/local/bin/argocd-repo-server
-COPY --from=builder /go/helm-sops/helm-sops /usr/local/bin/helm
+COPY argocd-repo-server-wrapper /usr/local/bin/
+COPY --from=builder /go/helm-sops/helm-sops /usr/local/bin/
+RUN cd /usr/local/bin && \
+    mv argocd-repo-server _argocd-repo-server && \
+    mv argocd-repo-server-wrapper argocd-repo-server && \
+    mv helm _helm && \
+    mv helm2 _helm2 && \
+    mv helm-sops helm && \
+    ln helm helm2
 USER argocd
