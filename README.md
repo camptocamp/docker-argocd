@@ -27,7 +27,7 @@ To use this custom image when deploying Argo CD using the [Helm chart](https://g
 global:
   image:
     repository: "camptocamp/argocd"
-    tag: "v1.5.0+c2c.2"
+    tag: "v1.5.1+c2c.1"
 ```
 
 #### Using Sops with a GPG key
