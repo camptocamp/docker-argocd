@@ -1,6 +1,6 @@
 #! /bin/sh
 
-GPG_PRIVATE_KEY_FILE='/app/config/gpg/privkey.asc'
+GPG_PRIVATE_KEY_FILE='/app/config/gpg2/privkey.asc'
 
 if [ -f "${GPG_PRIVATE_KEY_FILE}" ]
 then
