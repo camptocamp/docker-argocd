@@ -50,7 +50,8 @@ repoServer:
         defaultMode: 0600
   volumeMounts:
     - name: "gpg-private-key"
-      mountPath: "/app/config/gpg"
+      mountPath: "/app/config/gpg/privkey.asc"
+      subPath: "privkey.asc"
 ```
 
 and add the following lines to an encrypted value file (the GPG private key can be exported by running `gpg --export-secret-keys --armor <key ID>`:
