@@ -40,6 +40,9 @@ global:
     fsGroup: 2000
 
 repoServer:
+  env:
+    - name: "ARGOCD_BINARY_NAME"
+      value: "argocd-repo-server"
   volumes:
     - name: "gpg-private-key"
       secret:
@@ -84,6 +87,8 @@ repoServer:
         secretKeyRef:
           name: "argocd-secret"
           key: "aws.secretAccessKey"
+    - name: "ARGOCD_BINARY_NAME"
+      value: "argocd-repo-server"
 ```
 
 and add the following lines to an encrypted value file (create a dedicated IAM Access Key):
