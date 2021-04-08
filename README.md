@@ -27,7 +27,7 @@ To use this custom image when deploying Argo CD using the [Helm chart](https://g
 global:
   image:
     repository: "camptocamp/argocd"
-    tag: "v1.8.5_c2c.1"
+    tag: "v2.0.0_c2c.1"
 ```
 
 #### Using Sops with a GPG key
@@ -62,7 +62,7 @@ configs:
     extra:
       gpg.privkey.asc: |
         -----BEGIN PGP PRIVATE KEY BLOCK-----
-        
+
         ...
         -----END PGP PRIVATE KEY BLOCK-----
 ```
