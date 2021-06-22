@@ -10,6 +10,7 @@ COPY --from=builder /go/helm-sops/helm-sops /usr/local/bin/
 RUN cd /usr/local/bin && \
     mv argocd-repo-server _argocd-repo-server && \
     mv argocd-repo-server-wrapper argocd-repo-server && \
+    chmod 755 argocd-repo-server && \
     mv helm _helm && \
     mv helm2 _helm2 && \
     mv helm-sops helm && \
