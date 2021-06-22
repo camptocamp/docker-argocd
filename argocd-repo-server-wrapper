@@ -7,4 +7,4 @@ then
 	gpg --import "${GPG_PRIVATE_KEY_FILE}"
 fi
 
-exec "$(dirname "$0")/_$(basename "$0")" "$@"
+ARGOCD_BINARY_NAME="$(basename "$0")" exec "$(dirname "$0")/_$(basename "$0")" "$@"
