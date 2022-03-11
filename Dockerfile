@@ -1,4 +1,4 @@
-FROM golang:1.16 as builder
+FROM golang:1.17 as builder
 RUN git clone --branch=20200403-1 --depth=1 https://github.com/camptocamp/helm-sops && \
     cd helm-sops && \
     go build
