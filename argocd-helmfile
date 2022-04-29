@@ -1,0 +1,107 @@
+#!/bin/bash
+
+## standard build environment
+## https://argoproj.github.io/argo-cd/user-guide/build-environment/
+# ARGOCD_APP_NAME - name of application
+# ARGOCD_APP_NAMESPACE - destination application namespace.
+# ARGOCD_APP_REVISION - the resolved revision, e.g. f913b6cbf58aa5ae5ca1f8a2b149477aebcbd9d8
+# ARGOCD_APP_SOURCE_PATH - the path of the app within the repo
+# ARGOCD_APP_SOURCE_REPO_URL the repo's URL
+# ARGOCD_APP_SOURCE_TARGET_REVISION - the target revision from the spec, e.g. master.
+
+# does not have "v" in front
+# KUBE_VERSION="<major>.<minor>"
+# KUBE_API_VERSIONS="v1,apps/v1,..."
+
+set -e
+set -x
+
+echoerr() { printf "%s\n" "$*" >&2; }
+
+# exit immediately if no phase is passed in
+if [[ -z "${1}" ]]; then
+  echoerr "invalid invocation"
+  exit 1
+fi
+
+SCRIPT_NAME=$(basename "${0}")
+
+phase=$1
+
+# setup the env
+# HELM_HOME is deprecated with helm-v3, uses XDG dirs
+export HELM_HOME="/tmp/__${SCRIPT_NAME}__/apps/${ARGOCD_APP_NAME}"
+
+if [[ ! -d "/tmp/__${SCRIPT_NAME}__/bin" ]]; then
+  mkdir -p "/tmp/__${SCRIPT_NAME}__/bin"
+fi
+
+helm="$(which helm)"
+helmfile="$(which helmfile)"
+
+helmfile="${helmfile} --helm-binary ${helm} --no-color --allow-no-matching-release"
+
+if [[ "${ARGOCD_APP_NAMESPACE}" ]]; then
+  helmfile="${helmfile} --namespace ${ARGOCD_APP_NAMESPACE}"
+fi
+
+if [[ "${HELMFILE_GLOBAL_OPTIONS}" ]]; then
+  helmfile="${helmfile} ${HELMFILE_GLOBAL_OPTIONS}"
+fi
+
+# these should work for both v2 and v3
+helm_full_version=$(${helm} version --short --client | cut -d " " -f2)
+helm_major_version=$(echo "${helm_full_version%+*}" | cut -d "." -f1 | sed 's/[^0-9]//g')
+helm_minor_version=$(echo "${helm_full_version%+*}" | cut -d "." -f2 | sed 's/[^0-9]//g')
+helm_patch_version=$(echo "${helm_full_version%+*}" | cut -d "." -f3 | sed 's/[^0-9]//g')
+
+# fix scenarios where KUBE_VERSION is improperly set with trailing +
+# https://github.com/argoproj/argo-cd/issues/8249
+KUBE_VERSION=$(echo "${KUBE_VERSION}" | sed 's/[^0-9\.]*//g')
+
+echoerr "$(${helm} version --short --client)"
+echoerr "$(${helmfile} --version)"
+
+case $phase in
+  "init")
+    echoerr "starting init"
+
+    ${helm} dependency update
+    ;;
+
+  "generate")
+    echoerr "starting generate"
+
+    INTERNAL_HELM_TEMPLATE_OPTIONS=
+    HELM_VALUES_FILE=
+
+    # support added for --kube-version in 3.6
+    # https://github.com/helm/helm/pull/9040
+    if [[ ${helm_major_version} -eq 3 && ${helm_minor_version} -ge 6 && "${KUBE_VERSION}" ]]; then
+      INTERNAL_HELM_TEMPLATE_OPTIONS="${INTERNAL_HELM_TEMPLATE_OPTIONS} --kube-version=${KUBE_VERSION}"
+    fi
+
+    if [[ ${helm_major_version} -eq 3 && "${KUBE_API_VERSIONS}" ]]; then
+      INTERNAL_HELM_API_VERSIONS=""
+      for v in ${KUBE_API_VERSIONS//,/ }; do
+        INTERNAL_HELM_API_VERSIONS="${INTERNAL_HELM_API_VERSIONS} --api-versions=$v"
+      done
+      INTERNAL_HELM_TEMPLATE_OPTIONS="${INTERNAL_HELM_TEMPLATE_OPTIONS} ${INTERNAL_HELM_API_VERSIONS}"
+    fi
+
+    for file in $(yq '.releases[0].values[]' helmfile.yaml) ; do
+      HELM_VALUES_FILE="--values ${file} ${HELM_VALUES_FILE}"
+    done
+
+    ${helmfile} \
+      template \
+      --skip-deps \
+      --args "${INTERNAL_HELM_TEMPLATE_OPTIONS}" \
+      ${HELM_VALUES_FILE}
+    ;;
+
+  *)
+    echoerr "invalid invocation"
+    exit 1
+    ;;
+esac
