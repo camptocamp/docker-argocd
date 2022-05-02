@@ -29,16 +29,8 @@ SCRIPT_NAME=$(basename "${0}")
 phase=$1
 
 # setup the env
-# HELM_HOME is deprecated with helm-v3, uses XDG dirs
-export HELM_HOME="/tmp/__${SCRIPT_NAME}__/apps/${ARGOCD_APP_NAME}"
-
-if [[ ! -d "/tmp/__${SCRIPT_NAME}__/bin" ]]; then
-  mkdir -p "/tmp/__${SCRIPT_NAME}__/bin"
-fi
-
 helm="$(which helm)"
 helmfile="$(which helmfile)"
-
 helmfile="${helmfile} --helm-binary ${helm} --no-color --allow-no-matching-release"
 
 if [[ "${ARGOCD_APP_NAMESPACE}" ]]; then
