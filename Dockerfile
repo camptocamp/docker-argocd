@@ -20,4 +20,5 @@ RUN cd /usr/local/bin && \
     mv helm2 _helm2 && \
     mv helm-sops helm && \
     ln helm helm2
+
 USER 999
