@@ -8,13 +8,19 @@
 # ARGOCD_APP_SOURCE_PATH - the path of the app within the repo
 # ARGOCD_APP_SOURCE_REPO_URL the repo's URL
 # ARGOCD_APP_SOURCE_TARGET_REVISION - the target revision from the spec, e.g. master.
-
-# does not have "v" in front
 # KUBE_VERSION="<major>.<minor>"
 # KUBE_API_VERSIONS="v1,apps/v1,..."
 
 set -e
 set -x
+
+cleanup() {
+  if [[ "${ARGOCD_ENV_ADDITIONAL_VALUES}" ]] ; then
+    rm -r $tmpfile
+  fi
+}
+
+trap "cleanup" ERR
 
 echoerr() { printf "%s\n" "$*" >&2; }
 
@@ -85,11 +91,20 @@ case $phase in
       HELM_VALUES_FILE="--values ${file} ${HELM_VALUES_FILE}"
     done
 
+    if [[ "${ARGOCD_ENV_ADDITIONAL_VALUES}" ]] ; then
+      echoerr "Detected additional values"
+      tmpfile=$(mktemp /tmp/helmfile-additional-values-XXXXXX)
+      echo "${ARGOCD_ENV_ADDITIONAL_VALUES}" > $tmpfile
+      HELM_VALUES_FILE="--values ${tmpfile} ${HELM_VALUES_FILE}"
+    fi
+
     ${helmfile} \
       template \
       --skip-deps \
       --args "${INTERNAL_HELM_TEMPLATE_OPTIONS}" \
       ${HELM_VALUES_FILE}
+
+    cleanup
     ;;
 
   *)
