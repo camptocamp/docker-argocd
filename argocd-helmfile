@@ -12,7 +12,10 @@
 # KUBE_API_VERSIONS="v1,apps/v1,..."
 
 set -e
-set -x
+
+if [ "${ARGOCD_CMP_HELMFILE_DEBUG}" == "true" ] ; then
+  set -x
+fi
 
 cleanup() {
   if [[ "${ARGOCD_ENV_ADDITIONAL_VALUES}" ]] ; then
