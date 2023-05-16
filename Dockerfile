@@ -1,5 +1,5 @@
-FROM docker.io/golang:1.19 as builder
-RUN git clone --branch=20200403-1 --depth=1 https://github.com/camptocamp/helm-sops && \
+FROM docker.io/golang:1.20 as builder
+RUN git clone --branch=20230516-1 --depth=1 https://github.com/camptocamp/helm-sops && \
     cd helm-sops && \
     go build
 RUN wget -O /tmp/helmfile https://github.com/roboll/helmfile/releases/download/v0.144.0/helmfile_linux_amd64 && chmod +x /tmp/helmfile
