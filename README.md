@@ -96,6 +96,46 @@ configs:
       aws.secretAccessKey: <Secret Access Key>
 ```
 
+#### Using Sops with AGE key
+
+Install the Age tool and run the below command to generate a new key:
+
+```bash
+age-keygen -o key.txt
+```
+
+In order to use Sops with a Age key, add the following lines to the chart value file:
+
+```yaml
+      repoServer:
+        env:
+          - name: SOPS_AGE_KEY_FILE
+            value: /app/config/age/keys.txt
+        volumeMounts:
+          - mountPath: /app/config/age/keys.txt
+            name: sops-age
+            subPath: keys.txt
+        volumes:
+          - name: sops-age
+            secret:
+              defaultMode: 420
+              items:
+              - key: keys.txt
+                path: keys.txt
+              secretName: argocd-secret
+```
+
+and add the following lines to add key.txt (Add data of sops age key file):
+
+```yaml
+configs:
+  secret:
+    extra:
+      keys.txt: |
+       ...
+
+```
+
 ## Example application
 
 An example application as well as an example Argo CD setup to deploy it can be found [here](https://github.com/camptocamp/argocd-helm-sops-example).
