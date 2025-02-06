@@ -3,7 +3,7 @@ RUN git clone --branch=20230623-1 --depth=1 https://github.com/camptocamp/helm-s
     cd helm-sops && \
     go build
 
-FROM quay.io/argoproj/argocd:v2.11.3
+FROM quay.io/argoproj/argocd:v2.14.2
 USER root
 COPY argocd-repo-server-wrapper /usr/local/bin/
 COPY --from=builder /go/helm-sops/helm-sops /usr/local/bin/
