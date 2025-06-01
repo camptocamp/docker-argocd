@@ -1,44 +1,45 @@
-# Argo CD Docker Image
+# Argo CD Docker Image with Helm Secrets Support
 
-This Argo CD Docker Image contains the necessary tools to make use of Helm value files encrypted using Sops.
+This Argo CD Docker image comes pre-built with support for encrypted Helm value files using [SOPS](https://github.com/mozilla/sops). No manual image building is required.
 
-The following tools have been added to the image:
+### Included Tools
 
-- GnuPG
-- [Helm Sops](https://github.com/camptocamp/helm-sops)
+* **GnuPG** – For PGP key management
+* **Helm Sops (helm-secrets plugin)** – For decrypting Helm secrets
 
-Helm Sops is installed to transparently wrap Helm. This way, there is no need to configure a custom tool in Argo CD and native Helm functionalities can still be used (such as *valueFiles* or *values*).
+---
 
-Argo CD repository server binary is wrapped by a shell script which can import a GPG private key if it exists. The key must be located at `/app/config/gpg/privkey.asc`.
+## 1. Use the Pre-Built Custom Image
 
-## Usage
+Only the `argocd-repo-server` component requires the custom image. Other Argo CD components can continue using upstream images.
 
-### Encrypting Helm value files
-
-Read [Helm Sops documentation](https://github.com/camptocamp/helm-sops) to start using Helm encrypted value files.
-
-### Deploying Argo CD using the Helm chart
-
-#### Using the custom image
-
-To use this custom image when deploying Argo CD using the [Helm chart](https://github.com/argoproj/argo-helm/tree/master/charts/argo-cd), add the following lines to the chart value file:
+### Example Helm Configuration
 
 ```yaml
-global:
+repoServer:
   image:
-    repository: "camptocamp/argocd"
-    tag: "v2.7.13_c2c.1"
+    repository: camptocamp/argocd
+    tag: v3.0.5_c2c.1
+    imagePullPolicy: ""
 ```
 
-#### Using Sops with a GPG key
+---
 
-In order to use Sops with a GPG key, add the following lines to the chart value file:
+## 2. Export Your GPG Private Key
+
+Before creating the Kubernetes secret, export your GPG private key in ASCII-armored format:
+
+```bash
+gpg --armor --export-secret-keys <key-id> > key.asc
+```
+
+Replace `<key-id>` with your actual GPG key ID. This file (`key.asc`) will be used in the next step.
+
+---
+
+### Reference the Secret in Argo CD
 
 ```yaml
-global:
-  securityContext:
-    fsGroup: 2000
-
 repoServer:
   volumes:
     - name: "gpg-private-key"
@@ -48,94 +49,39 @@ repoServer:
           - key: "gpg.privkey.asc"
             path: "privkey.asc"
         defaultMode: 0600
+```
+
+---
+
+## 3. Mount the GPG Key in the Container
+
+Make the GPG key accessible to Helm inside the `argocd-repo-server` container:
+
+```yaml
+repoServer:
   volumeMounts:
     - name: "gpg-private-key"
       mountPath: "/app/config/gpg/privkey.asc"
       subPath: "privkey.asc"
 ```
 
-and add the following lines to an encrypted value file (the GPG private key can be exported by running `gpg --export-secret-keys --armor <key ID>`:
+> The `helm-secrets` plugin will use this path to access GPG keys during chart decryption.
+
+---
+
+## 4. Allow Helm Secrets Schemes in `argocd-cm` ConfigMap
+
+By default, Argo CD only allows `http://` and `https://` value file schemes. To support `helm-secrets` schemes, update the `argocd-cm` ConfigMap:
 
 ```yaml
 configs:
-  secret:
-    extra:
-      gpg.privkey.asc: |
-        -----BEGIN PGP PRIVATE KEY BLOCK-----
-        
-        ...
-        -----END PGP PRIVATE KEY BLOCK-----
+  cm:
+    helm.valuesFileSchemes: >-
+      secrets+gpg-import, secrets+gpg-import-kubernetes,
+      secrets+age-import, secrets+age-import-kubernetes,
+      secrets, secrets+literal,
+      https
 ```
 
-#### Using Sops with an AWS KMS key
+> This enables Argo CD to recognize and process encrypted Helm value files using schemes like `secrets+gpg-import://`.
 
-In order to use Sops with an AWS KMS key and if [instance profiles](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2.html) cannot be used, add the following lines to the chart value file:
-
-```yaml
-repoServer:
-  env:
-    - name: "AWS_ACCESS_KEY_ID"
-      valueFrom:
-        secretKeyRef:
-          name: "argocd-secret"
-          key: "aws.accessKeyId"
-    - name: "AWS_SECRET_ACCESS_KEY"
-      valueFrom:
-        secretKeyRef:
-          name: "argocd-secret"
-          key: "aws.secretAccessKey"
-```
-
-and add the following lines to an encrypted value file (create a dedicated IAM Access Key):
-
-```yaml
-configs:
-  secret:
-    extra:
-      aws.accessKeyId: <Access Key ID>
-      aws.secretAccessKey: <Secret Access Key>
-```
-
-#### Using Sops with AGE key
-
-Install the Age tool and run the below command to generate a new key:
-
-```bash
-age-keygen -o key.txt
-```
-
-In order to use Sops with a Age key, add the following lines to the chart value file:
-
-```yaml
-      repoServer:
-        env:
-          - name: SOPS_AGE_KEY_FILE
-            value: /app/config/age/keys.txt
-        volumeMounts:
-          - mountPath: /app/config/age/keys.txt
-            name: sops-age
-            subPath: keys.txt
-        volumes:
-          - name: sops-age
-            secret:
-              defaultMode: 420
-              items:
-              - key: keys.txt
-                path: keys.txt
-              secretName: argocd-secret
-```
-
-and add the following lines to add key.txt (Add data of sops age key file):
-
-```yaml
-configs:
-  secret:
-    extra:
-      keys.txt: |
-       ...
-
-```
-
-## Example application
-
-An example application as well as an example Argo CD setup to deploy it can be found [here](https://github.com/camptocamp/argocd-helm-sops-example).
