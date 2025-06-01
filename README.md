@@ -30,12 +30,18 @@ repoServer:
 Before creating the Kubernetes secret, export your GPG private key in ASCII-armored format:
 
 ```bash
-gpg --armor --export-secret-keys <key-id> > key.asc
+gpg --armor --export-secret-keys <key-id> > gpg.privkey.asc
 ```
 
 Replace `<key-id>` with your actual GPG key ID. This file (`key.asc`) will be used in the next step.
 
 ---
+## 3. Create the GPG Key Secret
+Create a Kubernetes secret containing the exported GPG private key:
+
+```bash
+kubectl create secret generic argocd-secret --from-file=gpg.privkey.asc -n argocd
+```
 
 ### Reference the Secret in Argo CD
 
@@ -53,7 +59,7 @@ repoServer:
 
 ---
 
-## 3. Mount the GPG Key in the Container
+## 4. Mount the GPG Key in the Container
 
 Make the GPG key accessible to Helm inside the `argocd-repo-server` container:
 
@@ -69,7 +75,7 @@ repoServer:
 
 ---
 
-## 4. Allow Helm Secrets Schemes in `argocd-cm` ConfigMap
+## 5. Allow Helm Secrets Schemes in `argocd-cm` ConfigMap
 
 By default, Argo CD only allows `http://` and `https://` value file schemes. To support `helm-secrets` schemes, update the `argocd-cm` ConfigMap:
 
