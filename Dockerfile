@@ -1,5 +1,5 @@
 FROM docker.io/golang:1.24 as builder
-RUN git clone --branch=20250205-1 --depth=1 https://github.com/camptocamp/helm-sops && \
+RUN git clone --branch=20250929-1 --depth=1 https://github.com/camptocamp/helm-sops && \
     cd helm-sops && \
     go build
 
