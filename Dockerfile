@@ -1,4 +1,4 @@
-FROM docker.io/golang:1.24 as builder
+FROM docker.io/golang:1.25 AS builder
 RUN git clone --branch=20250929-1 --depth=1 https://github.com/camptocamp/helm-sops && \
     cd helm-sops && \
     go build
