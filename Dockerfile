@@ -1,9 +1,9 @@
-FROM docker.io/golang:1.25 AS builder
+FROM docker.io/golang:1.27 AS builder
 RUN git clone --branch=20260107-1 --depth=1 https://github.com/camptocamp/helm-sops && \
     cd helm-sops && \
     go build
 
-FROM quay.io/argoproj/argocd:v3.2.6
+FROM quay.io/argoproj/argocd:v3.3.18
 USER root
 COPY argocd-repo-server-wrapper /usr/local/bin/
 COPY --from=builder /go/helm-sops/helm-sops /usr/local/bin/
